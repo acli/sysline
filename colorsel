@@ -1,0 +1,201 @@
+#!/bin/sh
+
+# colorsel
+# killer-app to make an ANSI attribute/color string -- bjd
+# not all attributes are used here
+
+# Note: TPUT must understand TERMINFO (not TERMCAP) capabilities -- acli
+
+TPUT=tcput
+
+# Try to detect the correct TPUT command.
+# Real sh (e.g., Solaris sh) seem to print everything to stdout,
+# but bash prints the not found message to stderr.
+
+if type $TPUT 2>&1| grep 'not found' >/dev/null; then
+	for TPUT in tputs tput; do
+	type $TPUT 2>&1| grep 'not found' >/dev/null || break
+	done
+fi
+
+${TPUT} clear || exit 1
+#echo -en "\033[H\033[J"
+
+# attributes:
+#  0 = all attributes off
+#  1 = intensity 2 (bold)
+#  2 = intensity 0 (half-bright)
+#  4 = underline on
+#  5 = blink on
+#  7 = reverse on  
+# 10 = G0/G1 charset
+# 11 = 1st alternate font
+# 12 = 2nd alternate font
+# 21 = intensity 1 (normal, default)
+# 22 = intensity 1 (normal, default)
+# 24 = underline off
+# 25 = blink off
+# 27 = reverse off
+# 38 = default fg, white underline
+# 39 = default fg, underline off
+# 49 = default bg
+
+error()
+{
+	echo -en "\nError: $1"
+	ERROR=1
+}
+
+choose()
+{
+	if [ ! "$4" = "-1" ]
+	then
+		PREV=$4
+	else
+		PREV=""
+	fi
+	${TPUT} cup $1 0
+	echo -en "Choose $3 number: $PREV" >&2
+	${TPUT} cup $1 $2
+	read answer
+	if [ "$answer" = "" ]
+	then
+		answer=$4
+	fi
+	if [ ! "$answer" = "-1" ]
+	then
+		${TPUT} cup $1 $2
+		echo $answer"   "
+	fi
+}
+
+CHR="*"
+echo -e "\n\t\t\t\tBJ's colorsel %^)"
+echo -e "\n\n\t\t\t\t\tBG"
+echo -e "     black    red      green    yellow   blue     magenta  cyan     white"
+echo -e "     40       41       42       43       44       45       46       47"
+for FG in 30 31 32 33 34 35 36 37
+do
+	if [ $FG -eq 33 ]
+	then
+		echo -n "F  $FG"
+	elif [ $FG -eq 34 ]
+	then
+		echo -n "G  $FG"
+	else
+		echo -en "   $FG"
+	fi
+	
+	for BG in 40 41 42 43 44 45 46 47
+	do
+		echo  -en "[${BG};${FG}m${CHR}[m"
+		
+		echo  -en "[1;${BG};${FG}m${CHR}[m"
+		echo  -en "[1;4;${BG};${FG}m${CHR}[m"
+		echo  -en "[1;4;7;${BG};${FG}m${CHR}[m"
+		echo  -en "[1;7;${BG};${FG}m${CHR}[m"
+		
+		echo  -en "[2;${BG};${FG}m${CHR}[m"
+		echo  -en "[2;4;${BG};${FG}m${CHR}[m"
+		echo  -en "[2;4;7;${BG};${FG}m${CHR}[m"
+		echo  -en "[2;7;${BG};${FG}m${CHR}[m"
+		
+		#echo -en "[4;${BG};${FG}m${CHR}[m"
+		#echo -en "[4;7;${BG};${FG}m${CHR}[m"
+	done
+	echo
+done
+ATTR_NRS="012345678"
+echo -e "     ${ATTR_NRS}${ATTR_NRS}${ATTR_NRS}${ATTR_NRS}${ATTR_NRS}${ATTR_NRS}${ATTR_NRS}${ATTR_NRS}"
+echo -e "\t\t\t\t       ATTR"
+
+
+BG="-1"
+FG="-1"
+AT="-1"
+while [ 1 = 1 ]
+do
+	ERROR=0
+	${TPUT} cup 19 0
+	#${TPUT} ed
+	choose 18 26 "background" $BG
+	BG=$answer
+	choose 19 26 "foreground" $FG
+	FG=$answer
+	choose 20 26 "attribute " $AT
+	AT=$answer
+
+	if [ ! $BG = -1 ]
+	then
+		if [ $BG -lt 40 -o $BG -gt 47 ]
+		then
+			error "background out of range (should be empty or [40-47])"
+		fi
+	fi
+	if [ ! $FG = -1 ]
+	then
+		if [ $FG -lt 30 -o $FG -gt 37 ]
+		then
+			error "foreground out of range (should be empty or [30-37])"
+		fi
+	fi
+	if [ ! $AT = -1 ]
+	then
+		if [ $AT -gt 8 ]
+		then
+			error "attribute choice out of range (should be empty or [0-8])"
+		fi
+	fi
+
+	if [ $ERROR -eq 0 ]
+	then
+		${TPUT} ed
+		echo -n "Combined string         : "
+		SEP=";"
+		if    [ "$AT" = "-1" ]; then 	STR="";	SEP="";
+		elif  [ "$AT" = "0" ]; then	STR="0";
+		elif  [ "$AT" = "1" ]; then	STR="1";
+		elif  [ "$AT" = "2" ]; then	STR="1;4";
+		elif  [ "$AT" = "3" ]; then	STR="1;4;7";
+		elif  [ "$AT" = "4" ]; then	STR="1;7";
+		elif  [ "$AT" = "5" ]; then	STR="2";
+		elif  [ "$AT" = "6" ]; then	STR="2;4";
+		elif  [ "$AT" = "7" ]; then	STR="2;4;7";
+		elif  [ "$AT" = "8" ]; then	STR="2;7";
+		#elif [ "$AT" = "9" ]; then#	STR="4";
+		#elif [ "$AT" = "A" ]; then#	STR="4;7";
+		fi
+		
+		if [ ! "$BG" = "-1" ]
+		then
+			STR="${STR}${SEP}${BG}"
+			SEP=";"
+		fi
+		
+		if [ ! "$FG" = "-1" ]
+		then
+			STR="${STR}${SEP}${FG}"
+		fi
+		
+		echo ${STR}"          "
+		if [ $ERROR -eq 1 ]
+		then
+			echo
+		fi
+
+		if [ ! "${STR}" = "" ]
+		then
+			STR="\033[${STR}m"
+		fi
+		
+		echo -e "\n\n\nIs ${STR}this\033[m what you had in mind?"
+		echo -e "And then you could add a 5 attribute to make it \033[5m${STR}blink\033[m..."
+		
+		echo -n "Again? "
+		read answer
+		if [ "$answer" = "n" -o "$answer = "N" -o "$answer = "no" ]
+		then
+			exit
+		fi
+	fi
+done

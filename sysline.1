@@ -1,0 +1,312 @@
+.\" Copyright (c) 1983, 1990 The Regents of the University of California.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms are permitted provided
+.\" that: (1) source distributions retain this entire copyright notice and
+.\" comment, and (2) distributions including binaries display the following
+.\" acknowledgment:  ``This product includes software developed by the
+.\" University of California, Berkeley and its contributors'' in the
+.\" documentation or other materials provided with the distribution and in
+.\" all advertising materials mentioning features or use of this software.
+.\" Neither the name of the University nor the names of its contributors may
+.\" be used to endorse or promote products derived from this software without
+.\" specific prior written permission.
+.\" THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
+.\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+.\"
+.\"     @(#)sysline.1	6.5 (Berkeley) 6/24/90
+.\"
+.TH SYSLINE 1 "%Q" "CCCGT Modified"
+.UC 5
+.SH NAME
+sysline \- display system status on status line of a terminal
+.SH SYNOPSIS
+.B sysline
+[
+.B \-bcDdehijlmpqrstw
+] [
+.B \-H\ remote
+] [
+.B +N
+]
+.SH DESCRIPTION
+.I Sysline
+runs in the background and periodically displays system status information
+on the status line of the terminal.
+Not all terminals contain a status line.
+Those that do include the h19, concept 108, Ann Arbor Ambassador, vt100,
+Televideo 925/950 and Freedom 100.
+If no flags are given,
+.I sysline
+displays the time of day, the current load average, the change in load
+average in the last 5 minutes, the number of users (followed by a `u'),
+the number of runnable processes (followed by an `r'), the number
+of suspended processes (followed by an `s'), 
+and the users who have logged on and off since the last status report.
+Finally, if new mail has arrived, a summary of it is printed.
+If there is unread mail in your mailbox, an asterisk will appear after the
+display of the number of users.
+The display is normally in reverse video (if your terminal supports
+this in the status line) and is right justified to reduce distraction.
+Every fifth display is done in normal video to give the screen a chance
+to rest.
+.PP
+.SS Options
+The following flags may be given on the command line.
+.TP 12
+.B \-b
+Beep once every half hour and twice every hour, just like those obnoxious
+watches you keep hearing.
+.TP
+.B \-c
+Clear the status line for 5 seconds before each redisplay.
+.TP
+.B \-D
+Print out the current day/date before the time.
+.TP
+.B \-d
+Debug mode \- print status line data in human readable format.
+.TP
+.B \-e
+Print out only the information.  Do not print out the control commands
+necessary to put the information on the bottom line.  This option is
+useful for putting the output of
+.I sysline
+onto the mode line of an emacs window.
+
+.TP
+.B \-H remote
+Print the load average on the remote host \fIremote\fP.
+If the host is down, or is not sending out \fIrwhod\fP packets, then
+the down time is printed instead.
+.TP
+.B \-h
+Print out the host machine's name after the time.
+.TP
+.B \-i
+Print out the process id of the
+.I sysline
+process onto standard output upon startup.
+With this information you can send the alarm signal to the
+.I sysline
+process to cause it to update immediately.
+.I sysline
+writes to the standard error, so you can redirect the standard
+output into a file to catch the process id.
+.TP
+.B \-j
+Force the sysline output to be left justified even on terminals capable of
+cursor movement on the status line.
+.TP
+.B \-l
+Don't print the names of people who log in and out.
+.TP
+.B \-m
+Don't check for mail. 
+.TP
+.B +N
+Update the status line every N seconds.
+The default is 60 seconds, minimum is 10 seconds, maximum 500 seconds.
+.TP
+.B \-p
+Don't report the number of processes which are runnable and suspended.
+.TP
+.B \-r
+Don't display in reverse video.
+.TP
+.B \-q
+Don't print out diagnostic messages if something goes wrong when starting up.
+.TP
+.B \-s
+Print "short" form of line by left-justifying
+.I iff
+escapes are not allowed in the status line.
+Some terminals (the Televideos and Freedom 100 for example)
+do not allow cursor movement (or other "intelligent" operations)
+in the status line.  For these terminals,
+.I sysline
+normally uses blanks to cause right-justification.
+This flag will disable the adding of the blanks.
+.TP
+.B \-t
+Print the time in 24-hour format.
+.I sysline
+normally prints the time in 12-hour format
+unless
+.I sysline
+was compiled with the CLOCK24 option.
+.TP
+.B \-w
+Window mode \- print the status on the current line of the terminal,
+suitable for use inside a one line window.
+.SS File contents displayed on the status line
+.PP
+If you have a file named .who or .sysline in your home directory,
+then the contents of that file is printed first on the status line
+(the contents of only one of these is displayed; only if .who is not
+found is .sysline read).
+One common use of this feature is to alias chdir, pushd, and popd to
+place the current directory stack in ~/.who or ~/.sysline after it
+changes the new directory.
+.PP
+Another might be to display short messages from for instance cron(8)
+or at(1).
+.PP
+(Note: dependent on compiling options, these files may be
+named .who.<tty> and .sysline.<tty> where <tty> is the basename
+of the terminal on which the copy of sysline is running).
+.SS Temporarily disabling sysline
+.PP
+If you have a file .syslinelock in your home directory, then
+.I sysline
+will not update its statistics and write on your screen, it will just go to
+sleep for a minute.  This is useful if you want to momentarily disable
+.I sysline.
+Note that it may take a few seconds from the time the lock file
+is created until you are guaranteed that
+.I sysline
+will not write on the screen.
+(Note: dependent on compiling options, this file may be named .syslinelock.<tty> 
+where <tty> is the basename of the terminal on  which the copy of sysline 
+is running).
+.SH STATUS-LINE COLORIZATION
+You can give the status line most any color you like by setting an
+environment variable
+.B SYSLINE_COLORS
+(or
+.B SYSLINE_COLOURS
+). This variable is expected to contain the values of attributes and
+colors of both the normal status line and the reversed status line.
+.PP
+Its format is
+\fB"rv=aa\fR[\fB;bb\fR[\fB;cc...\fR]]\fB:nm=zz\fR[\fB;yy\fR[\fB;xx...\fR]]\fB"\fR
+, where aa, bb, ... and zz, yy, ... each represent a color attribute
+or (foreground or background) color, separated from one another by a
+semi-colon. The attributes/colors following
+.B "rv="
+are for the reversed status line (the one displayed most of the
+time ), those following
+.B "nm="
+are for the normal (un-reversed) status line (the one that will
+show only every fifth display - I know this seems counterintuitive).
+For clarity, separate the "rv=" part from the "nm=" part with a
+character like a blank or a colon; the order of rv or nm is
+unimportant. A maximum of 8 attributes/colors can be set for each.
+.PP
+An example: to have a bold/blue-bg/yellow-fg status line which
+becomes a bold/red-bg/white-fg status line every fifth display,
+do:
+.br
+          SYSLINE_COLORS="rv=1;44;33:nm=1;41;37"
+.PP
+Note that fancy colorization of the normal status line defeats the
+purpose of displaying it in normal video, namely to give the screen
+a rest every 5th display.
+.sp
+.RS +.2i
+.ta 1.0i
+.nf
+Attributes are as follows (incomplete):
+
+	\fB0\fR = all attributes off
+	\fB1\fR = intensity 2 (bold)
+	\fB2\fR = intensity 0 (half-bright)
+	\fB4\fR = underline on
+	\fB5\fR = blink on
+	\fB7\fR = reverse on
+.fi
+.RE
+.sp
+
+.sp
+.RS +.2i
+.ta 1.0i 2.5i 4.0i
+.nf
+Color codes are as follows:
+
+	color       foreground  background
+	-----       ----------  ----------
+	black       \fB30          40\fR
+	red         \fB31          41\fR
+	green       \fB32          42\fR
+	yellow      \fB33          43\fR
+	blue        \fB34          44\fR
+	magenta     \fB35          45\fR
+	cyan        \fB36          46\fR
+	white       \fB37          47\fR
+.fi
+.RE
+.sp
+
+.SH MAIL CHECKING
+The original Linux port of
+.I sysline
+will only check for mail if
+/var/spool/mail/${USER}
+exists;
+if USER is not defined,
+.I sysline
+will not check for mail.
+(It will not issue any warning.)
+
+At CCCGT,
+.I sysline
+has been modified
+so that if the MAIL variable is defined,
+it will check mail at the mailbox $MAIL;
+otherwise it will check for mail in
+/var/spool/mail/${LOGNAME}
+in addition to
+/var/spool/mail/${USER}.
+.SH ENVIRONMENT
+.ta 2.4i
+.nf
+TERM			name of terminal (must have the hsl capability)
+MAIL			path to mailbox file
+USER			login name, for mail checking
+LOGNAME			login name to use if USER is not defined
+SYSLINE_COLORS		see the STATUS-LINE COLORIZATION section
+.fi
+.SH FILES
+.ta 2.4i
+.nf
+/var/run/utmp		names of people who are logged in
+/proc			process information file-system
+/var/spool/rwho/whod.*	who/uptime info for remote hosts
+${HOME}/.who		information to print on bottom line
+${HOME}/.sysline	information to print on bottom line
+${HOME}/.syslinelock	when it exists, sysline will not print
+.fi
+.SH AUTHORS
+John Foderaro
+.br
+Tom Ferrin converted it to use termcap.
+.br
+Mark Horton added terminfo capability.
+.br
+Linux port \- bjdouma@xs4all.nl (Bauke Jan Douma)
+.br
+Ambrose Li <ai337@freenet.toronto.on.ca>
+added a few mail/MIME-related minor fixes.
+.SH BUGS
+.br
+If there is too much to display on one line, the excess is thrown away.
+.br
+The mail check does sloppy header processing, so unusual headers,
+such as ones with continuation lines,
+or ones with more than one whitespace character after the keyword,
+might confuse it.
+.br
+MIME mail might cause strange behaviour.
+In particular,
+.I sysline
+knows nothing about charsets,
+so letters in foreign languages
+(e.g., Shift-JIS mail arriving on ISO-8859 terminals,
+or Big5/ISO-8859 mail arriving on JIS terminals)
+may cause the terminal to go crazy.
+.SH BUG REPORTS TO
+For this Linux port:
+.br
+Bauke Jan Douma		bjdouma@xs4all.nl

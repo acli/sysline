@@ -1,0 +1,55 @@
+#!/bin/sh
+
+# make referring termcap entries, one for a status-line on the bottom line,
+# and one with the status-line on the top line -- bjd
+
+how_many()
+{
+	echo -en "hardware has how many $1? " >&2
+	read answer
+}
+
+echo >&2
+echo "('make.termcap-entry >file' to write output to file)" >&2
+echo >&2
+how_many "columns"
+columns=$answer
+how_many "rows   "
+rows=$answer
+echo >&2
+
+cat <<EOT
+# ${columns}x${rows} capable of displaying a status-line on the bottom line
+# note 1: the names "lx" and "con-unk" might have to be replaced
+# note 2: name carries the suffix "-s"
+lx|con${columns}x${rows}-s:\\
+	:co#${columns}:li#${rows}:\\
+	:hs:\\
+	:es:\\
+	:ts=\E7\E[m\E[%i${rows};%dH\E[1K:\\
+	:fs=\E[0K\E8:\\
+	:ds=\E7\E[${rows};1H\E[2K\E8:\\
+	:i2=\E[1;$((${rows}-1))r\E[H\E[J:\\
+	:cs=\E[%i%d;%dr:\\
+	:cl=\E[$((${rows}-1));${columns}H\E[1J\E[H:\\
+	:cd=\E[K:\\
+	:tc=con-unk:
+
+# ${columns}x${rows} capable of displaying a status-line on the top line
+# note 1: the names "lx" and "con-unk" might have to be replaced
+# note 2: name carries the suffix "-top-s"
+lx|con${columns}x${rows}-top-s:\\
+	:co#${columns}:li#${rows}:\\
+	:hs:\\
+	:es:\\
+	:ts=\E7\E[m\E[%i1;%dH\E[1K:\\
+	:fs=\E[0K\E8:\\
+	:ds=\E7\E[1;1H\E[2K\E8:\\
+	:i2=\E[2;${rows}r\E[2;1H\E[J:\\
+	:.cs=\E[2;${rows}r:\\
+	:cs=\E[%i%i%d;%dr:\\
+	:cl=\E[2;1H\E[J:\\
+	:cm=\E[%i%a+c\001%d;%dH:\\
+	:ho=\E[2;1H:\\
+	:tc=con-unk:
+EOT

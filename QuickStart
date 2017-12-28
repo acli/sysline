@@ -1,0 +1,14 @@
+ My my, are we in a hurry.  Ok, all set?
+
+ 0. in this example, let CC be the number of columns, RR the number of rows
+    on you terminal, and rr be equal to RR-1
+ 1. run Configure and "make install" (compile for use of /etc/termcap)
+ 2. do "make.termcap-entry >file" (answer CC and RR respectively)
+ 3. add the entries in file to /etc/termcap (replace "con-unk" as necessary)
+ 4. do "stty rows rr" on the vt where you want to run sysline
+ 5. do "TERM=con80xRR-s" (bash, zsh) or "set term=con80xRR-s" (csh) on that vt
+ 6. do "sysline +10" on that vt
+ 7. check if the status-line isn't messed with, do "ls -la", "less <something>", etc.
+ 8. all's well? do: mail -s "we did it - stop - description follows" `whoami` <QuickStart
+ 9. still here? there's the README (be sure to skip section 2 this time :),
+    a man-page, the sources, maybe a newsgroup?

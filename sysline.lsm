@@ -1,0 +1,19 @@
+Begin3
+Title:          system status display on bottom line of terminal
+Version:        Linux port v. 1.1 of Berkeley 5.16 original
+Entered-date:   Mar 16th 1996
+Description:    status-line utility for Linux
+		prints a variety of information on the special status- 
+		line of terminals that have a status display capability.
+Keywords:       sysline status-line status
+Author:         John K. Foderaro (Berkeley original)
+Maintained-by:  for Linux: bjdouma@xs4all.nl (Bauke Jan Douma)
+Primary-site:   sunsite.unc.edu /pub/Linux/utils/terminal
+		1k  sysline.lsm
+		53k sysline-1.1.tar.gz
+Alternate-site: 
+Original-site:  
+Platform:       Linux with /proc filesystem, vt100 terminal or emulation,
+		curses or ncurses, good /etc/termcap or terminfo file.
+Copying-policy: Regents of the University of California and the FSF's GPL v.2
+End

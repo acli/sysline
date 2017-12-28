@@ -1,0 +1,25 @@
+The following changes have been made to sysline-1.1:
+
+(1) Mail check fix
+    Recognize $LOGNAME instead of just $USER (which is not set in
+    some shells under Linux). Also recognize $MAIL.
+
+(2) CJK compatibility
+    Changed ARROW in config.h.in back to "->" to avoid corruption
+    of the display in kterm
+
+(3) Header skip fix
+    sysline 1.1 will print the header immediately following a
+    header longer than about 100 characters. This patched version
+    correctly skips over all headers.
+
+(4) "-t" option
+    sysline can now be compiled without CLOCK24 in config.h but
+    still get an 24-hour clock, as in MFCF sysline
+
+(5) Rudimentary MIME support
+    (a) Understands quoted-printable and BASE64 encodings, including
+	RFC 1342-encoded Subject headers
+    (b) Automatically skips over to the first body part with a text
+	type
+

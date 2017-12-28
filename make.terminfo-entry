@@ -1,0 +1,55 @@
+#!/bin/sh
+
+# make referring terminfo entries, one for a status-line on the bottom line,
+# and one with the status-line on the top line -- bjd
+
+how_many()
+{
+	echo -en "hardware has how many $1? " >&2
+	read answer
+}
+
+echo >&2
+echo "('make.terminfo-entry >file' to write output to file)" >&2
+echo >&2
+how_many "columns"
+columns=$answer
+how_many "rows   "
+rows=$answer
+echo >&2
+
+cat <<EOT
+# ${columns}x${rows} capable of displaying a status-line on the bottom line
+# note 1: the names "lx" and "con-unk" might have to be replaced
+# note 2: name carries the suffix "-s"
+lx|con${columns}x${rows}-s,
+	cols#${columns},lines#${rows},
+	hs,
+	eslok,
+	tsl=\E7\E[m\E[%i${rows};%p1%dH\E[1K,
+	fsl=\E[0K\E8,
+	dsl=\E7\E[${rows};1H\E[2K\E8,
+	is2=\E[1;$((${rows}-1))r\E[H\E[J,
+	csr=\E[%i%p1%d;%p2%dr,
+	clear=\E[$((${rows}-1));${columns}H\E[1J\E[H,
+	ed=\E[K,
+	use=con-unk,
+
+# ${columns}x${rows} capable of displaying a status-line on the top line
+# note 1: the names "lx" and "con-unk" might have to be replaced
+# note 2: name carries the suffix "-top-s"
+lx|con${columns}x${rows}-top-s,
+	cols#${columns},lines#${rows},
+	hs,
+	eslok,
+	tsl=\E7\E[m\E[1;%p1%dH\E[1K,
+	fsl=\E[0K\E8,
+	dsl=\E7\E[1;1H\E[2K\E8,
+	is2=\E[2;${rows}r\E[2;1H\E[J,
+	.csr=\E[2;${rows}r,
+	csr=\E[%i%i%p1%d;%p2%dr,
+	clear=\E[2;1H\E[J,
+	cup=\E[%i%p1%{1}%+%d;%p2%dH,
+	home=\E[2;1H,
+	use=con-unk,
+EOT

@@ -1,0 +1,118 @@
+#!/bin/sh
+
+# pathetic attempt at a configure utility -- bjd
+# for one thing it doesn't check if what you specify exists in those
+# places -- don't worry, you'll find out soon enough...  :^)
+
+#set -x
+
+rm -f Makefile config.h *.o
+
+
+CC=gcc
+echo
+echo
+echo "Compile sysline for aout or ELF? [ELF]"
+echo "1) ELF"
+echo "2) aout"		# aout-phaseout
+read choice
+echo
+case "$choice" in
+	2)	CC="gcc -bi486-linuxaout	# aout"
+		LDFLAGS="-L/usr/i486-linuxaout/lib " ;;
+	*)	CC="gcc	# ELF is assumed" ;;
+esac
+echo "...using ${CC}"
+
+
+ask_LIBPATH()
+{
+	#LDFLAGS="${LDFLAGS}"
+	echo -n "Path lib$1.a? [$2] "
+	read choice
+	echo
+	case "$choice" in
+		"")	;;
+		*)	LDFLAGS="${LDFLAGS} -L$choice" ;;
+	esac
+}
+
+
+ask_INCPATH()
+{
+	CFLAGS=-I$2
+	echo -n "Path for $1 include files? [$2] "
+	read choice
+	echo
+	case "$choice" in
+		"")	;;
+		*)	CFLAGS=-I$choice ;;
+	esac
+}
+
+
+echo
+echo "Compile sysline for the termcap or the terminfo database? [termcap]"
+echo "1) termcap"
+echo "2) terminfo (ncurses)"
+read choice
+case "$choice" in
+	2)	echo -e "...using terminfo (ncurses)\n"
+		TERMLIB=-lncurses
+		ask_LIBPATH "ncurses" "/usr/local/lib"
+		ask_INCPATH "ncurses" "/usr/include/ncurses"
+		;;
+	*)	echo -e "...using termcap\n"
+		TERMLIB=-ltermcap
+		;;
+esac
+
+
+echo
+echo "What kind of terminal is sysline going to be used on? [2]"
+echo "1) ONLY on the Linux console or other iso-8859-1 terminals"
+echo "2) Non-iso-8859-1 terminals (including kterm)"
+read choice
+case "$choice" in
+	1)	ARROWS='"\\273"'
+		echo "...using iso-8859-1 guillemet to indicate message body"
+		;;
+	*)	ARROWS='"->"'
+		echo "...using traditional ASCII arrow to indicate message body"
+		;;
+esac
+
+
+# make config.h
+echo "...creating config.h"
+sed -e '1,$s/"->"/'"$ARROWS"'/g' < config.h.in > config.h
+if [ ! "$TERMLIB" = "-ltermcap" ]
+then
+	cat <<- EOT >>config.h
+	/* terminfo */
+	#define TERMINFO
+	#include <term.h>
+	EOT
+fi
+
+# make Makefile
+if [ "$TERMLIB" = "-ltermcap" ]
+then
+	cat <<- EOT >>config.h
+	/* curses */
+	/*#include <curses.h>*/
+	EOT
+else
+	cat <<- EOT >>config.h
+	/* ncurses */
+	#include <ncurses.h>
+	#include <unctrl.h>
+	EOT
+fi
+
+echo -e "...creating Makefile\n"
+sed "s|@CC@|${CC}|
+s|@CFLAGS@|${CFLAGS}|
+s|@LDFLAGS@|${LDFLAGS}|
+s|@COMMENT@|${COMMENT}|
+s|@TERMLIB@|${TERMLIB}|" <Makefile.in >Makefile

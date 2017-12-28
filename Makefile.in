@@ -1,0 +1,82 @@
+# Makefile for sysline (version 1.1 Linux)
+# bjdouma@xs4all.nl
+
+# Changing the name has zero effect on other compiling options;
+# sysline will however in case of errors report itself with this name.
+# Take your pick.
+
+PROGNAME	= sysline
+#PROGNAME	= sysline.termcap
+#PROGNAME	= sysline.terminfo
+
+##############################################################################
+CURDIR		:= $(shell basename `pwd`)
+VERSION		= $(CURDIR)
+
+CC		= @CC@
+OPT		=
+CFLAGS		= -O6 -m486 -Wall @CFLAGS@
+LDFLAGS		= $(CFLAGS) -s @LDFLAGS@
+TERMLIB		= @TERMLIB@
+
+UTILITIES 	= cs
+OBJS		= sysline.o getloadavg.o mime.o
+PROG		= $(strip $(PROGNAME))
+
+# note: cs _not_ installed by default
+INSTALL_PROGS	= $(PROG)  # $(UTILITIES)
+PROGS_MODE	= 555
+PROGS_DIR	= /usr/bin
+MANPG_DIR	= /usr/man/man1
+INSTALL_MANPG	= sysline.1
+MANPG_MODE	= 644
+
+INSTALL		= install
+
+
+all:		$(PROG)
+
+$(PROG):	$(OBJS)
+		$(CC) $(strip $(OPT)) $(LDFLAGS) $(OBJS) -o $(PROG) $(TERMLIB)
+
+sysline.o:	sysline.c config.h rwhod.h pathnames.h mime.h sysline.h
+		@echo Making $(PROGNAME)
+		$(CC) $(strip $(CFLAGS)) -c -o sysline.o sysline.c
+
+getloadavg.o:	getloadavg.c
+		$(CC) $(CFLAGS) -DHAVE_UNISTD_H -c -o getloadavg.o getloadavg.c
+
+mime.o:		mime.c mime.h sysline.h
+		$(CC) $(CFLAGS) -DHAVE_UNISTD_H -c -o mime.o mime.c
+
+config.h:
+		touch config.h
+
+pathnames.h:
+		touch pathnames.h
+
+rwhod.h:
+		touch rwhod.h
+
+.PHONY:	install
+install:	all
+		$(INSTALL) -s -m $(PROGS_MODE) $(strip $(INSTALL_PROGS)) $(PROGS_DIR) 2>/dev/null
+		$(INSTALL)    -m $(MANPG_MODE) $(INSTALL_MANPG) $(MANPG_DIR)
+ifeq ($(strip $(INSTALL_PROGS)),$(strip $(PROG)))
+		@echo "note: cs not installed"
+endif
+
+.PHONY: clean
+clean:
+		rm -f Makefile config.h \
+		sysline sysline.termcap sysline.terminfo \
+		sysline.*.gz $(OBJS) a.out core make.res *~
+
+clobber:	clean
+
+distclean:	clobber
+
+tar:		distclean
+		cd .. && tar --files-from=$(CURDIR)/Manifest -cvf - | gzip -9 >$(CURDIR)/$(VERSION).tar.gz
+#		@ls -l *.gz
+#		@tar zvtf $(VERSION).tar.gz

@@ -1,0 +1,288 @@
+
+sysline  --  status-line display utility for Linux
+
+
+1. INTRO
+--------
+This is a Linux port of the BSD sysline utility.  I don't know how it
+happened, but it sort of became my adopted child.  The original sources
+are included here in ./BSD.
+
+
+2. SPARE ME THE DETAILS
+-----------------------
+cat QuickStart
+
+
+3. INSTALL
+----------
+The program requires presence of the /proc file-system; if you don't
+have it, you might consider recompiling your kernel (if you don't have
+a kernel, consider getting an other kind of OS first).
+
+Run ./Configure to create Makefile and config.h.
+It shouldn't really be necessary to edit these any further, though there
+may eventually be some things you want to modify or customize.
+
+Running `make' will compile sysline, `make install' will install
+sysline and sysline.1 in the paths as per the Makefile (if you install
+by hand, run strip on the binary first).  If you want to have `cs'
+installed as well (see below), edit the Makefile accordingly.
+
+If `make' fails with an error like:
+``*** commands commence before first target.  Stop.''
+you prob. need to remove tabs from empty lines in the Makefile
+(either that or get GNU make version 3.73 or later).
+
+After having installed sysline, run the make.termcap-entry or the
+make.terminfo-entry script (whichever sysline was compiled for), and
+add the output to the relevant database (see below).
+
+
+4. TERMCAP/TERMINFO REQUIREMENTS
+--------------------------------
+Your termcap file or terminfo file --whichever applies-- might be
+lacking some capabilities that sysline needs or appreciates.  Here's an
+overview.
+
+The following capabilities are absolutely 100% essential:
+
+termcap capability	terminfo equiv.  meaning
+------------------	---------------  -------
+hs			hs	         terminal has status-line
+es			eslok	         escapes in status-line ok
+ts			tsl	         move to status-line
+fs			fsl	         move from status-line
+ds			dsl	         clear status-line
+
+
+The next capabilities are prob. already defined some place, and can be
+left unchanged; just check if you have them:
+
+termcap capability	terminfo equiv.  meaning
+------------------	---------------  -------
+so			smso	         begin standout (reverse) mode
+se			rmso	         end standout (reverse) mode
+ce			el	         clear to end-of-line
+bl			bel	         audible signal (bell)
+
+
+These too are capabilities which prob. are already defined some
+place, but which might need modifications:
+
+termcap capability	terminfo equiv.  meaning
+------------------	---------------  -------
+cs			csr		 set scroll-region
+cl			clear		 clear screen and home cursor
+cd			ed		 clear to end-of-screen     (*
+cm			cup		 move cursor to row, column (**
+ho			home		 home cursor		    (**
+				(*  only for a top status-line
+				(** only for a bottom status-line
+
+
+The following capabilities are also used, if they are defined; i2
+better be present when you're not using the `cs' script (see below);
+ws#80 can usually be omitted, unless you want to specify a shorter
+status-line than the screen-width:
+
+termcap capability	terminfo equiv.  meaning
+------------------	---------------  -------
+i2			is2	         initialization string
+ws#80			wsl	         width of status-line
+
+
+The most convenient way of modifying termcap (or the terminfo database
+file) is to paste a referring entry somewhere into that file.  The
+make.termcap-entry and make.terminfo-entry scripts allow you to create
+such an entry with minimal effort.
+The invocation of one of these scripts will in fact output two entries:
+one for a status-line on the bottom line and one for a status-line on
+the top line of the screen.  This output is supposed to be directed to a
+file, which can then be pasted into the database-file at an appropriate
+place.  Cinch.
+
+One note about the 'cd' capability-string.  This should really clear
+from the cursor to the end-of-screen (\E[J), however, what these scripts
+generate (\E[K) clears only to the end-of-line.  The former would
+temporarily erase the status-line, the latter leaves it alone, but has
+the side-effect that other programs may occasionally clear too little.
+Remedy that by commenting out this modified 'cd' (by placing a period
+in front of it: .cd), depending on which annoys you more.
+If only there were a way we could clear from the cursor to a specific
+position; I'm convinced there is none, but am open to suggestions, even
+the less elegant or more exotic ones.
+
+Also note that the entries produced by these scripts refer to entry
+'con-unk' only as an example; change to whatever is appropriate for you.
+
+
+5. COLORIZING THE STATUS-LINE
+-----------------------------
+The status-line can be given most any color of choice by setting an
+environment variable SYSLINE_COLORS (or, if that's Greek to you,
+SYSLINE_COLOURS).
+This variable is expected to contain the values of attributes and
+colors of both the normal and the reversed status-line.
+
+The format of its value is "rv=aa[;bb[;cc...]]:nm=zz[;yy[;xx...]]"
+where aa, bb, ... and zz, yy, ... each represent a color-attribute or
+a foreground/background-color, separated from one another by a
+semi-colon.  Those following "rv=" are for the reversed status-line
+(which it is 4 out of 5 times), those following "nm=" are for the
+normal un-reversed status-line (every 5th display; is this
+counterintuitive or what).  For clarity, the "rv=" part may be
+separated from the "nm=" part with any character like a blank or a
+colon, or... -- your chance to be creative!  The order of rv or nm is
+unimportant.
+
+An example: to have a bold/blue-bg/yellow-fg status-line which
+becomes a bold/red-bg/white-fg status-line every fifth display do
+SYSLINE_COLORS="rv=1;44;33:nm=1;41;37" on that vt.
+
+Note that all this fancy colorization of the status-line defeats the
+purpose of displaying this status-line in normal video, which is to give
+the screen a rest every 5th display thereby preventing terminal illness.
+
+Attributes are as follows (incomplete):
+
+	0 = all attributes off
+	1 = intensity 2 (bold)
+	2 = intensity 0 (half-bright)
+	4 = underline on
+	5 = blink on
+	7 = reverse on
+
+Color codes are as follows:
+
+	color		foreground	background
+	-----		----------	----------
+	black		30		40
+	red		31		41
+	green		32		42
+	yellow		33		43
+	blue		34		44
+	magenta		35		45
+	cyan		36		46
+	white		37		47
+
+
+6. OPERATION
+------------
+Each time before starting sysline you need to take some precautions
+to ensure that other programs don't interfere with the status-line.
+This may involve setting a scroll-region, but at least involves doing
+`stty rows N', where N is the number of rows (lines) in the scroll-
+region.
+
+If you have the 'i2/is2' capability in your termcap/terminfo entry,
+sysline will set the scroll-region itself upon startup.  In this case
+the only thing you have to do before starting sysline is `stty rows N',
+N being 1 less than the number of lines on the terminal.
+
+If on the other hand you have chosen to leave out or comment out the
+'i2/is2' capability from the termcap/terminfo database, you also need
+to set the scroll-region yourself, in addition to making the stty call
+before starting sysline.  Enter my `cs' script: it will do both!  As
+arguments give it the first and last line of the scroll-region.
+
+Note: if you're going to use `cs', you might want to modify its choice
+between GNU's termcap-based `tput', or ncurses' terminfo-based `tput',
+or none of the above; in the latter case it uses its own strings.
+
+Example for a 80x30 terminal:
+------------------------------
+
+to add status-line:
+
+1. stty rows 29	(or `cs 1 30')
+2. TERM=con80x30-s	(for bash, zsh; for csh: "set term=con80x30-s")
+3. sysline		(will set scroll-region using the i2/is2 strings)
+
+to remove status-line:
+
+1. kill -HUP <pid>	(tidy up when exiting)
+2. TERM=con80x30	(for bash, zsh; for csh: "set term=con80x30")
+3. stty rows 30      \	(back to full-size tty)
+4. tput csr 1 30     /	(or `cs 1 30') (reset scroll-region to normal)
+
+
+7. FURTHER NOTES AND HINTS
+--------------------------
+* To run sysline in a 1-line xterm, your termcap/terminfo database
+  file does not need any of the above mentioned capabilities; just
+  start sysline with the -w flag and resize the window any way you
+  like, preferably to 1 line.
+
+  Running sysline without the -w flag in a larger xterm --which btw.
+  would require all the capabilities to be present in the xterm entry--
+  doesn't make much sense, unless you never intend to resize that
+  particular window.
+
+* If you compiled sysline for terminfo and you changed the contents of
+  the terminfo database file, do not forget to run 'tic <terminfo_file>'
+  to compile that file in order to make your changes take effect.
+
+  Analogously, if you're using sysline for termcap, and have a TERMCAP
+  environment variable set containing the full terminal description,
+  you have to actually logout or do `eval `tset -s`' to make the changes
+  take effect.
+
+* To clear the screen without removing --albeit temporarily-- the
+  status-line, use the 'tput clear' command.
+
+  A terminfo-based `tput' comes with the ncurses package; a termcap-
+  based `tput' (which accepts the same _terminfo_ capability-names as
+  the ncurses `tput') can be found in GNU's tput-1.0.tar.gz or the GNU
+  termutils-2.0 package.
+
+* To reset the screen without it removing the status-line, you can use
+  the `reset' script that comes with the util-linux package, which uses
+  `tput' (since ncurses' terminfo-based `tput' and GNU's termcap-based
+  `tput' accept the same capability-names, that reset script can be
+  used for both).
+
+* Want to force an update of the status-line?
+  Do `kill -ALRM <sysline-pid>'.
+
+* If you run sysline as root, it may continue to run after you log out
+  (without the data on the status-line being updated anymore mind you).
+  This happens to be the case getty_ps at least (2.0.7c and later), not
+  with getty4.32 by Fred van Kempen; I don't know about other getty's, nor
+  why they behave so differently and what would be standard -- your guess
+  is as good as mine, probably better, which doesn't help.
+  Anyway, to avoid this waste of resources, you could start it thus:
+
+	       	sysline -i >~/sysline.pid
+
+  and then have so:
+
+		if [ -e ~/sysline.pid ]
+		then
+			kill -HUP `cat ~/sysline.pid` 2>/dev/null
+			rm ~/sysline.pid
+			cs 1 25		# example 25-line terminal
+		fi
+
+  in your ~/.logout file -- or something more elaborate.
+
+* Hardscroll (Shift-PgUp/Dn) does not work on vt's with a status-line.
+  This is normal -- I never use it anyway.
+
+* If programs start behaving erratically, check you termcap file for
+  trailing whitespace on lines which are part of an entry.  Yes.
+
+* Individual capabilities in the termcap and terminfo databases can be
+  commented out by placing a period just before the capability name.
+
+
+
+8. FEEDBACK
+-----------
+Questions, bugs, comments, suggestions, flames to yours truly.
+
+Did I say ``enjoy''?
+
+				BJ
+				``in the software business since tuesday''
+				bjdouma@xs4all.nl (Bauke Jan Douma)
