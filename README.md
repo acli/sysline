@@ -12,6 +12,9 @@ You probably already have a clock on your desktop's panel,
 so how is sysline still relevant?
 Because you can make it beep every half hour,
 and no desktop clock (that I know of) does that.
+(You could say Apple's clock does that,
+but Apple's verbose announcements are obnoxious;
+sysline's beeps are subtle yet effective.)
 This is important if you want to follow
 the 30/30/30 rule recommended by some optometrists:
 you don't need to constantly look at the clock
