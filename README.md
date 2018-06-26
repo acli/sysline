@@ -6,7 +6,7 @@ I don't remember when I did the modding,
 but it was a long time ago.
 I've decided to put this here
 only because I kept forgetting
-where I've put my modded version.
+where I'd put my modded version.
 
 You probably already have a clock on your desktop's panel,
 so how is sysline still relevant?

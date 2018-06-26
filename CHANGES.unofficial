@@ -15,7 +15,7 @@ The following changes have been made to sysline-1.1:
 
 (4) "-t" option
     sysline can now be compiled without CLOCK24 in config.h but
-    still get an 24-hour clock, as in MFCF sysline
+    still get a 24-hour clock, as in MFCF sysline
 
 (5) Rudimentary MIME support
     (a) Understands quoted-printable and BASE64 encodings, including
