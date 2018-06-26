@@ -24,5 +24,5 @@ You also need to make sysline run in your xterm;
 
 [1]: CHANGES.unofficial
 [2]: README
-[1]: https://www.rohanjain.in/bell/
+[3]: https://www.rohanjain.in/bell/
 
